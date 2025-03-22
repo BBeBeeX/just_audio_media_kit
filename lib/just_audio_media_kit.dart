@@ -8,6 +8,7 @@ import 'package:just_audio_media_kit/mediakit_player.dart';
 import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
 import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 class JustAudioMediaKit extends JustAudioPlatform {
@@ -49,7 +50,35 @@ class JustAudioMediaKit extends JustAudioPlatform {
   static bool prefetchPlaylist = false;
 
   static final _logger = Logger('JustAudioMediaKit');
-  final _players = HashMap<String, MediaKitPlayer>();
+  static final _players = HashMap<String, MediaKitPlayer>();
+
+  static AudioDevice _device = AudioDevice.auto();
+  static List<AudioDevice> _devices = [];
+  static final _deviceSubject =
+      BehaviorSubject<(AudioDevice, List<AudioDevice>)>.seeded(
+    (AudioDevice.auto(), []),
+  );
+
+  static Stream<(AudioDevice, List<AudioDevice>)>
+      get currentAudioDeviceStream => _deviceSubject.stream;
+
+  static (AudioDevice, List<AudioDevice>) get currentData =>
+      _deviceSubject.value;
+
+  static void setDevice(AudioDevice device) {
+    _device = device;
+    _deviceSubject.add((_device, _devices));
+  }
+
+  static void setDevices(List<AudioDevice> devices) {
+    _devices = devices;
+    _deviceSubject.add((_device, _devices));
+  }
+
+  static Future<void> changeAudioDevice(AudioDevice device) async {
+    if (_players.isEmpty) return;
+    await _players.values.first.setAudioDevice(device);
+  }
 
   /// Players that are disposing (player id -> future that completes when the player is disposed)
   final _disposingPlayers = HashMap<String, Future<void>>();

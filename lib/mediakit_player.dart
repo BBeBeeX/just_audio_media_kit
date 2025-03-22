@@ -59,6 +59,12 @@ class MediaKitPlayer extends AudioPlayerPlatform {
     }
 
     _streamSubscriptions = [
+      _player.stream.audioDevice.listen((audioDevice) {
+        JustAudioMediaKit.setDevice(audioDevice);
+      }),
+      _player.stream.audioDevices.listen((audioDevices) {
+        JustAudioMediaKit.setDevices(audioDevices);
+      }),
       _player.stream.duration.listen((duration) {
         if (_currentMedia?.extras?['overrideDuration'] != null) return;
 
@@ -131,6 +137,10 @@ class MediaKitPlayer extends AudioPlayerPlatform {
         print("MPV: [${event.level}] ${event.prefix}: ${event.text}");
       }),
     ];
+  }
+
+  Future<void> setAudioDevice(AudioDevice device) async {
+    await _player.setAudioDevice(device);
   }
 
   PlaylistMode _loopModeToPlaylistMode(LoopModeMessage loopMode) {
